@@ -16,6 +16,14 @@ import javafx.scene.layout.HBox
 import javafx.geometry.Pos
 import javafx.geometry.Insets
 import javafx.scene.layout.VBox
+import javafx.scene.input.TransferMode
+import javafx.event.EventType
+import javafx.scene.input.DragEvent
+import javafx.event.ActionEvent
+import javafx.event.EventHandler
+import scala.collection.JavaConverters._
+import scala.collection.JavaConverters._
+
 
 class StartApp extends Application {
 
@@ -28,22 +36,80 @@ class StartApp extends Application {
     primaryStage.setTitle("Text Replacer")
 
     val root = new BorderPane
+    
+    
+    val outputTexLabel = new Label
+    outputTexLabel.setText("Result Text")
+    val outputTextArea = new TextArea
 
     val inputTextLabel = new Label
     inputTextLabel.setText("insert Text")
     val inputTextArea = new TextArea
 
-    val outputTexLabel = new Label
-    outputTexLabel.setText("Result Text")
-    val outputTextArea = new TextArea
-
     inputTextArea.textProperty().addListener(event => {
-
-      inputText = inputTextArea.getText
-
-       outputTextArea.setText(getTransormedText(new InputGatherer(searchFor, replace, inputText)))
-
+    	
+    	inputText = inputTextArea.getText
+    			
+    			outputTextArea.setText(getTransormedText(new InputGatherer(searchFor, replace, inputText)))
+    			
     })
+    
+   
+    
+    inputTextArea.setOnDragOver(new EventHandler[DragEvent]  {
+      
+     override  def handle( e : DragEvent) {
+       
+    	 val copy = TransferMode.COPY
+    	 
+//    	 for (t <- ts) {
+//    	   println(t)
+//    	 }
+    	 
+       e.acceptTransferModes(copy)
+       
+       
+//       println(ts)
+        
+      }
+      
+    })
+    
+    inputTextArea.setOnDragDropped(event => {
+       
+      if (event.getDragboard.hasFiles()){
+       
+        val files =  event.getDragboard.getFiles.asScala
+        
+        var filesNamesTogether = "";
+        
+        for (f <- files ) {
+          
+          val fileName = f.getName
+          val dotPosition = fileName.lastIndexOf(".")
+          
+          if(dotPosition > 0) {
+            
+            val fileNameWithoutExtenstion = fileName.substring(0,dotPosition)
+            
+            filesNamesTogether += fileNameWithoutExtenstion +"\r\n"
+            
+          }
+         
+          
+        }
+        
+        filesNamesTogether = filesNamesTogether.trim()
+        
+        inputTextArea.setText(filesNamesTogether)
+        
+        
+      }
+      
+    })
+    
+    
+    
 
     val refreshButton = new Button
 
@@ -94,6 +160,8 @@ class StartApp extends Application {
      new TextReplacer(inputGatherer).replace
      
   }
+  
+  
   
 }
 
