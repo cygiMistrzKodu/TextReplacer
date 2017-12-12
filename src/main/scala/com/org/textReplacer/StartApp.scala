@@ -23,7 +23,9 @@ import javafx.event.ActionEvent
 import javafx.event.EventHandler
 import scala.collection.JavaConverters._
 import scala.collection.JavaConverters._
-
+import java.io.File
+import scala.collection.mutable.ListBuffer
+import scala.collection.mutable.Buffer
 
 class StartApp extends Application {
 
@@ -36,8 +38,7 @@ class StartApp extends Application {
     primaryStage.setTitle("Text Replacer")
 
     val root = new BorderPane
-    
-    
+
     val outputTexLabel = new Label
     outputTexLabel.setText("Result Text")
     val outputTextArea = new TextArea
@@ -47,69 +48,30 @@ class StartApp extends Application {
     val inputTextArea = new TextArea
 
     inputTextArea.textProperty().addListener(event => {
-    	
-    	inputText = inputTextArea.getText
-    			
-    			outputTextArea.setText(getTransormedText(new InputGatherer(searchFor, replace, inputText)))
-    			
+
+      inputText = inputTextArea.getText
+
+      outputTextArea.setText(getTransormedText(new InputGatherer(searchFor, replace, inputText)))
+
     })
-    
-   
-    
-    inputTextArea.setOnDragOver(new EventHandler[DragEvent]  {
-      
-     override  def handle( e : DragEvent) {
-       
-    	 val copy = TransferMode.COPY
-    	 
-//    	 for (t <- ts) {
-//    	   println(t)
-//    	 }
-    	 
-       e.acceptTransferModes(copy)
-       
-       
-//       println(ts)
-        
-      }
-      
+
+    inputTextArea.setOnDragOver(event => {
+
+      event.acceptTransferModes(TransferMode.COPY)
+
     })
-    
+
     inputTextArea.setOnDragDropped(event => {
-       
-      if (event.getDragboard.hasFiles()){
-       
-        val files =  event.getDragboard.getFiles.asScala
-        
-        var filesNamesTogether = "";
-        
-        for (f <- files ) {
-          
-          val fileName = f.getName
-          val dotPosition = fileName.lastIndexOf(".")
-          
-          if(dotPosition > 0) {
-            
-            val fileNameWithoutExtenstion = fileName.substring(0,dotPosition)
-            
-            filesNamesTogether += fileNameWithoutExtenstion +"\r\n"
-            
-          }
-         
-          
-        }
-        
-        filesNamesTogether = filesNamesTogether.trim()
-        
-        inputTextArea.setText(filesNamesTogether)
-        
-        
+
+      if (event.getDragboard.hasFiles()) {
+
+        val files = event.getDragboard.getFiles.asScala
+
+        inputTextArea.setText(getFileNamesWithoutExtensions(files))
+
       }
-      
+
     })
-    
-    
-    
 
     val refreshButton = new Button
 
@@ -154,15 +116,28 @@ class StartApp extends Application {
     primaryStage.show()
 
   }
-  
-  private def getTransormedText( inputGatherer : InputGatherer) : String = {
-    
-     new TextReplacer(inputGatherer).replace
-     
+
+  private def getFileNamesWithoutExtensions(files: Buffer[File]): String = {
+
+    val filesNamesTogether =
+      for {
+        f <- files
+        val fileName = f.getName
+        val dotPosition = fileName.lastIndexOf(".")
+        if dotPosition > 0
+        val fileNameWithoutExtenstion = fileName.substring(0, dotPosition)
+      } yield fileNameWithoutExtenstion + "\r\n"
+
+    filesNamesTogether.mkString.trim
+
   }
-  
-  
-  
+
+  private def getTransormedText(inputGatherer: InputGatherer): String = {
+
+    new TextReplacer(inputGatherer).replace
+
+  }
+
 }
 
 object StartApp {
